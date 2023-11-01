@@ -1,6 +1,6 @@
-﻿namespace GroomerApi.Entities
+﻿namespace GroomerApi.Models
 {
-    public class Animal
+    public class AnimalDto
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -8,6 +8,5 @@
         public string Age { get; set; }
         public string Hair { get; set; }
         public int UserId { get; set; }
-        public virtual User User { get; set; }
     }
 }

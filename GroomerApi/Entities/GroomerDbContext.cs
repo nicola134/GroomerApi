@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace GroomerApi.Entities
 {
-    public class GroomerDbContext: DbContext
+    public class GroomerDbContext : DbContext
     {
         private string _connectionString = "Server=(localdb)\\mssqllocaldb;Database=GroomerDb;Trusted_Connection=True;";
         public DbSet<User> Users { get; set; }
@@ -15,11 +15,23 @@ namespace GroomerApi.Entities
             modelBuilder.Entity<User>()
                 .Property(x => x.Name)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasMaxLength(25);
 
             modelBuilder.Entity<Address>()
                 .Property(a => a.Street)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Address>()
+                .Property(a => a.City)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Address>()
+                .Property(a => a.PostalCode)
+                .IsRequired()
+                .HasMaxLength(6);
+
 
             modelBuilder.Entity<Animal>()
                 .Property(a => a.Name)

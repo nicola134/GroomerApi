@@ -1,15 +1,15 @@
 using GroomerApi;
 using GroomerApi.Entities;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IWeatherForecastService, WeatherForecastServcice>();
 builder.Services.AddDbContext<GroomerDbContext>();
 builder.Services.AddScoped<GroomerSeeder>();
-
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 
 
