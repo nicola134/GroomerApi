@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GroomerApi.Entities;
 using GroomerApi.Models;
+using GroomerApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,42 +10,29 @@ namespace GroomerApi.Controllers
     [Route("api/user")]
     public class GroomerController : Controller
     {
-        private readonly GroomerDbContext _dbContext1;
-        private readonly IMapper _mapper;
+        private readonly IUserService _userService;
 
-        public GroomerController(GroomerDbContext dbContext, IMapper mapper)
+        public GroomerController(IUserService userService)
         {
-            _dbContext1 = dbContext;
-            _mapper = mapper;
+            _userService = userService;
         }
         [HttpGet]
         public ActionResult<IEnumerable<UserDto>> GetAll()
         {
-            var users = _dbContext1
-                .Users
-                .Include(r => r.Address)
-                .Include(r => r.Animals)
-                .ToList();
-
-            var usersDto = _mapper.Map<List<UserDto>>(users);
+            var usersDto = _userService.GetAll();
 
             return Ok(usersDto);
         }
         [HttpGet("{id}")]
         public ActionResult<UserDto> Get([FromRoute] int id)
         {
-            var user = _dbContext1
-                .Users
-                .Include(r => r.Address)
-                .Include(r => r.Animals)
-                .FirstOrDefault(x => x.Id == id);
+            var userDto = _userService.GetById(id);
 
-            if (user is null)
+            if(userDto == null)
             {
                 return NotFound();
             }
 
-            var userDto = _mapper.Map<UserDto>(user);
             return Ok(userDto);
         }
 
@@ -55,11 +43,36 @@ namespace GroomerApi.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var user = _mapper.Map<User>(dto);
-            _dbContext1.Users.Add(user);
-            _dbContext1.SaveChanges();
+            var id = _userService.Create(dto);
 
-            return Created($"/api/restaurant/{user.Id}", null);
+            return Created($"/api/restaurant/{id}", null);
+        }
+        [HttpDelete("{id}")]
+        public ActionResult DeleteUser([FromRoute] int id)
+        {
+            var isDelted = _userService.Delete(id);
+
+            if(isDelted) 
+            {
+                return NoContent();
+            }
+            return NotFound();
+        }
+        [HttpPut("{id}")]
+        public ActionResult UpdateUser([FromBody] UpdateUserDto dto, [FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = _userService.Update(dto, id);
+            if (!result)
+            {
+                return NotFound();
+            }
+
+            return Ok();
         }
     }
 }
