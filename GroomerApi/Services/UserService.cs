@@ -9,10 +9,12 @@ namespace GroomerApi.Services
     {
         private readonly GroomerDbContext _dbContext;
         private readonly IMapper _mapper;
-        public UserService(GroomerDbContext dbContext, IMapper mapper)
+        private readonly ILogger<UserService> _logger;
+        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _logger = logger;
         }
         public UserDto GetById(int id)
         {
@@ -52,6 +54,8 @@ namespace GroomerApi.Services
 
         public bool Delete(int id)
         {
+            _logger.LogError($"User with id: {id} DELETE action invoked");
+
             var user = _dbContext
                 .Users
                 .FirstOrDefault(r => r.Id == id);
