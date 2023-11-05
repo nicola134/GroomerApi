@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GroomerApi.Entities;
+using GroomerApi.Exceptions;
 using GroomerApi.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +26,7 @@ namespace GroomerApi.Services
                 .FirstOrDefault(r => r.Id == id);
             if (user == null)
             {
-                return null;
+                throw new NotFoundException("User not found");
             }
 
             var result = _mapper.Map<UserDto>(user);
@@ -52,7 +53,7 @@ namespace GroomerApi.Services
             return user.Id;
         }
 
-        public bool Delete(int id)
+        public void Delete(int id)
         {
             _logger.LogError($"User with id: {id} DELETE action invoked");
 
@@ -62,16 +63,15 @@ namespace GroomerApi.Services
 
             if (user == null)
             {
-                return false;
+                throw new NotFoundException("User not found");
             }
 
             _dbContext.Users.Remove(user);
             _dbContext.SaveChanges();
 
-            return true;
         }
 
-        public bool Update(UpdateUserDto dto, int id)
+        public void Update(UpdateUserDto dto, int id)
         {
             var user = _dbContext
                 .Users
@@ -79,7 +79,7 @@ namespace GroomerApi.Services
 
             if (user == null)
             {
-                return false;
+                throw new NotFoundException("User not found");
             }
 
             user.Name = dto.Name;
@@ -87,8 +87,6 @@ namespace GroomerApi.Services
             user.PhoneNumber= dto.PhoneNumber;
 
             _dbContext.SaveChanges();
-
-            return true;
 
         }
     }

@@ -1,5 +1,6 @@
 using GroomerApi;
 using GroomerApi.Entities;
+using GroomerApi.Middleware;
 using GroomerApi.Services;
 using NLog.Web;
 using System.Reflection;
@@ -18,6 +19,7 @@ builder.Services.AddScoped<GroomerSeeder>(); //Ró¿nica pomiêdzy scope a singleto
 //zapytanie np.HTTPPost czyli podczas wykonywania dla tego danego requesta obiekt jest taki sam, a podczas nastêpnego nowego requessta np. httpost obiekt bêdzie ju¿ inny
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddScoped<ErrorHandlingMiddleware>();
 
 
 
@@ -29,6 +31,7 @@ var seeder = scope.ServiceProvider.GetRequiredService<GroomerSeeder>();
 // Configure the HTTP request pipeline.
 
 seeder.Seed();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

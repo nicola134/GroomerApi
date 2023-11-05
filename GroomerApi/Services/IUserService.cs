@@ -9,7 +9,7 @@ namespace GroomerApi.Services
         IEnumerable<UserDto> GetAll();
         UserDto GetById(int id);
         int Create(CreateUserDto dto);
-        bool Delete(int id);
-        bool Update(UpdateUserDto dto, int id);
+        void Delete(int id);
+        void Update(UpdateUserDto dto, int id);
     }
 }

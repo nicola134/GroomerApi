@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GroomerApi.Controllers
 {
     [Route("api/user")]
+    [ApiController]//słuzy do walidacji danych, czyli zamiast w kazdym zapytaniu Http dodawac modelstate.isvalid wystarczy uzyc tylko to
     public class GroomerController : Controller
     {
         private readonly IUserService _userService;
@@ -28,21 +29,16 @@ namespace GroomerApi.Controllers
         {
             var userDto = _userService.GetById(id);
 
-            if(userDto == null)
-            {
-                return NotFound();
-            }
-
             return Ok(userDto);
         }
 
         [HttpPost]
         public ActionResult CreateUser([FromBody] CreateUserDto dto)
         {
-            if (!ModelState.IsValid)// to sprawdza czy w klasie CreateUserDto są spełnione wszystkie walidacje na polach czyli  [Required],[MaxLength(25)], [PHone] itd.
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)// to sprawdza czy w klasie CreateUserDto są spełnione wszystkie walidacje na polach czyli  [Required],[MaxLength(25)], [PHone] itd.
+            //{
+            //    return BadRequest(ModelState);
+            //}
             var id = _userService.Create(dto);
 
             return Created($"/api/restaurant/{id}", null);
@@ -50,27 +46,18 @@ namespace GroomerApi.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteUser([FromRoute] int id)
         {
-            var isDelted = _userService.Delete(id);
+            _userService.Delete(id);
 
-            if(isDelted) 
-            {
-                return NoContent();
-            }
-            return NotFound();
+            return NoContent();
         }
         [HttpPut("{id}")]
         public ActionResult UpdateUser([FromBody] UpdateUserDto dto, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = _userService.Update(dto, id);
-            if (!result)
-            {
-                return NotFound();
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
+            _userService.Update(dto, id);
 
             return Ok();
         }
