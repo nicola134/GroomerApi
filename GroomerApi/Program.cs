@@ -20,6 +20,7 @@ builder.Services.AddScoped<GroomerSeeder>(); //Ró¿nica pomiêdzy scope a singleto
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
+builder.Services.AddSwaggerGen();
 
 
 
@@ -33,6 +34,12 @@ var seeder = scope.ServiceProvider.GetRequiredService<GroomerSeeder>();
 seeder.Seed();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Groomer API");
+});
 
 app.UseAuthorization();
 
