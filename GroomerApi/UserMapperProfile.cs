@@ -23,6 +23,8 @@ namespace GroomerApi
                     Street = dto.Street,
                 }));
 
+            CreateMap<CreateAnimalDto, Animal>();
+
         }
     }
 }

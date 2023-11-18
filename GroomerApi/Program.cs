@@ -18,8 +18,10 @@ builder.Services.AddDbContext<GroomerDbContext>();
 builder.Services.AddScoped<GroomerSeeder>(); //Ró¿nica pomiêdzy scope a singleton jest taka ¿e, Singleton jest taki sam przez ca³y czas czyli od pocz¹tku uruchomienia programu az do jego zamkniêcia, a scope jest taki sam tylko w okreœlonym czasie, tzn w api tego przyk³adem jest 
 //zapytanie np.HTTPPost czyli podczas wykonywania dla tego danego requesta obiekt jest taki sam, a podczas nastêpnego nowego requessta np. httpost obiekt bêdzie ju¿ inny
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
+builder.Services.AddScoped<RequestTimeMiddleware>();
 builder.Services.AddSwaggerGen();
 
 
@@ -33,6 +35,7 @@ var seeder = scope.ServiceProvider.GetRequiredService<GroomerSeeder>();
 
 seeder.Seed();
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<RequestTimeMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseSwagger();

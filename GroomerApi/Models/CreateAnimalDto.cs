@@ -1,13 +1,15 @@
-﻿namespace GroomerApi.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GroomerApi.Models
 {
-    public class Animal
+    public class CreateAnimalDto
     {
-        public int Id { get; set; }
+        [Required]
         public string Name { get; set; }
         public string? Description { get; set; }
         public string? Age { get; set; }
+        [Required]
         public string Hair { get; set; }
         public int UserId { get; set; }
-        public virtual User User { get; set; }
     }
 }
