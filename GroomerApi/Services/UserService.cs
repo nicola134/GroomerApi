@@ -2,6 +2,7 @@
 using GroomerApi.Entities;
 using GroomerApi.Exceptions;
 using GroomerApi.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace GroomerApi.Services
@@ -11,11 +12,14 @@ namespace GroomerApi.Services
         private readonly GroomerDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
-        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger)
+        private readonly IPasswordHasher<User> _passwordHasher;
+
+        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger, IPasswordHasher<User> passwordHasher)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _passwordHasher = passwordHasher;
         }
         public UserDto GetById(int id)
         {
@@ -47,6 +51,10 @@ namespace GroomerApi.Services
         public int Create(CreateUserDto dto)
         {
             var user = _mapper.Map<User>(dto);
+
+            var hashePassword = _passwordHasher.HashPassword(user, dto.Password);
+            user.PasswordHash = hashePassword;
+
             _dbContext.Users.Add(user);
             _dbContext.SaveChanges();
 
@@ -82,7 +90,8 @@ namespace GroomerApi.Services
                 throw new NotFoundException("User not found");
             }
 
-            user.Name = dto.Name;
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
             user.Email = dto.Email;
             user.PhoneNumber= dto.PhoneNumber;
 

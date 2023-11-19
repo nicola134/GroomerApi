@@ -1,24 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace GroomerApi.Models
 {
     public class CreateUserDto
     {
-        [Required]
-        [MaxLength(25)]
-        public string Name { get; set; }
-        [EmailAddress]
+        public string FirstName { get; set; }
+
+        public string LastName { get; set; }
+
+        public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
+
         public string Email { get; set; }
-        [Phone]
         public string PhoneNumber { get; set; }
-        [Required]
-        [MaxLength(50)]
+        public int RoleId { get; set; } = 1;
         public string City { get; set; }
-        [Required]
-        [MaxLength(50)]
         public string Street { get; set; }
-        [Required]
-        [MaxLength(6)]
         public string PostalCode { get; set; }
     }
 }

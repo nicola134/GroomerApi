@@ -9,13 +9,22 @@ namespace GroomerApi.Entities
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Animal> Animals { get; set; }
-
+        public DbSet<Role> Roles { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
-                .Property(x => x.Name)
+                .Property(x => x.FirstName)
                 .IsRequired()
                 .HasMaxLength(25);
+
+            modelBuilder.Entity<User>()
+                .Property(x => x.LastName)
+                .IsRequired()
+                .HasMaxLength(25);
+
+            modelBuilder.Entity<User>()
+                .Property(x => x.Email)
+                .IsRequired();
 
             modelBuilder.Entity<Address>()
                 .Property(a => a.Street)
@@ -32,7 +41,6 @@ namespace GroomerApi.Entities
                 .IsRequired()
                 .HasMaxLength(6);
 
-
             modelBuilder.Entity<Animal>()
                 .Property(a => a.Name)
                 .IsRequired();
@@ -40,12 +48,16 @@ namespace GroomerApi.Entities
             modelBuilder.Entity<Animal>()
                 .Property(a => a.Hair)
                 .IsRequired();
+
+            modelBuilder.Entity<Role>()
+                .Property(a => a.Name)
+                .IsRequired();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(_connectionString);
-            //'add -migration Init' - dodaje pliki migracyjne 
+            //'add-migration Init' - dodaje pliki migracyjne 
             //'update-database' - aktualizuje bazę danych o ostatni plik migracyjny
         }
     }

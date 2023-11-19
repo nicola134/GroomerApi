@@ -1,4 +1,5 @@
 ﻿using GroomerApi.Entities;
+using System.Collections.Generic;
 
 namespace GroomerApi
 {
@@ -13,6 +14,13 @@ namespace GroomerApi
         {
             if (_dbContext.Database.CanConnect())
             {
+                if(!_dbContext.Roles.Any())
+                {
+                    var roles = GetRoles();
+                    _dbContext.Roles.AddRange(roles);
+                    _dbContext.SaveChanges();
+                }
+
                 if (!_dbContext.Users.Any())
                 {
                     var users = GetUsers();
@@ -21,15 +29,32 @@ namespace GroomerApi
                 }
             }
         }
+        private IEnumerable<Role> GetRoles()
+        {
+            List<Role> roles = new List<Role>()
+            {
+                new Role()
+                {
+                    Name = "User"
+                },
+                new Role()
+                {
+                    Name = "Admin"
+                }
+            };
+            return roles;
+        }
         private IEnumerable<User> GetUsers()
         {
             List<User> users = new List<User>()
             {
                 new User()
                 {
-                    Name = "test",
+                    FirstName = "test",
+                    LastName = "test2",
                     Email = "Test@gmail.com",
                     PhoneNumber = "123-123-345",
+                    PasswordHash = "123",
                     Animals = new List<Animal>()
                     {
                         new Animal()
@@ -50,13 +75,17 @@ namespace GroomerApi
                         City = "Warszasa",
                         Street = "test",
                         PostalCode = "test",
-                    }
+                    },
+                    RoleId = 1
+                    
                 },
                 new User()
                 {
-                    Name = "test2",
+                    FirstName = "test3",
+                    LastName = "test5",
                     Email = "Test2@gmail.com",
                     PhoneNumber = "123-123-345",
+                    PasswordHash = "123",
                     Animals = new List<Animal>()
                     {
                         new Animal()
@@ -77,7 +106,8 @@ namespace GroomerApi
                         City = "Warszasa",
                         Street = "test",
                         PostalCode = "test",
-                    }
+                    },
+                    RoleId = 1
                 }
             };
             return users;
