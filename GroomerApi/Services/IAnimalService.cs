@@ -9,5 +9,6 @@ namespace GroomerApi.Services
         List<AnimalDto> GetAll(int userId);
         void DeleteAll(int userId);
         void Delete(int userId, int animalId);
+
     }
 }

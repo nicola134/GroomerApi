@@ -1,11 +1,13 @@
-using FluentValidation;
+ï»¿using FluentValidation;
 using FluentValidation.AspNetCore;
 using GroomerApi;
+using GroomerApi.Authorization;
 using GroomerApi.Entities;
 using GroomerApi.Middleware;
 using GroomerApi.Models;
 using GroomerApi.Models.Validators;
 using GroomerApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Web;
@@ -19,10 +21,11 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
 builder.Host.UseNLog();
 
 // Add services to the container.
+var authenticationsSettings = new AuthenticationSettings();
+// dodajemy do obiektu authenticationsSettings dane z appsetings.json informacje z nagÂ³Ã³wka  Authentication
+builder.Configuration.GetSection("Authentication").Bind(authenticationsSettings);
 
-var authenticationSettings = new AuthenticationSettings();
-builder.Configuration.GetSection("Authentication").Bind(authenticationSettings);
-
+builder.Services.AddSingleton(authenticationsSettings);
 builder.Services.AddAuthentication(option =>
 {
     option.DefaultAuthenticateScheme = "Bearer";
@@ -34,23 +37,24 @@ builder.Services.AddAuthentication(option =>
     cfg.SaveToken = true;
     cfg.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = authenticationSettings.JwtIssuer,
-        ValidAudience = authenticationSettings.JwtIssuer,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationSettings.JwtKey)),
+        ValidIssuer = authenticationsSettings.JwtIssuer,
+        ValidAudience = authenticationsSettings.JwtIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationsSettings.JwtKey)),
     };
 });
 
 builder.Services.AddControllers().AddFluentValidation();
 builder.Services.AddDbContext<GroomerDbContext>();
-builder.Services.AddScoped<GroomerSeeder>(); //Ró¿nica pomiêdzy scope a singleton jest taka ¿e, Singleton jest taki sam przez ca³y czas czyli od pocz¹tku uruchomienia programu az do jego zamkniêcia, a scope jest taki sam tylko w okreœlonym czasie, tzn w api tego przyk³adem jest 
-//zapytanie np.HTTPPost czyli podczas wykonywania dla tego danego requesta obiekt jest taki sam, a podczas nastêpnego nowego requessta np. httpost obiekt bêdzie ju¿ inny
+builder.Services.AddScoped<IAuthorizationHandler, ResourceOperationReirementHandler>();
+builder.Services.AddScoped<GroomerSeeder>(); //RÃ³Å¼nica pomiÄ™dzy scope a singleton jest taka Å¼e, Singleton jest taki sam przez caÅ‚y czas czyli od poczÄ…tku uruchomienia programu az do jego zamkniÄ™cia, a scope jest taki sam tylko w okreÅ›lonym czasie, tzn w api tego przykÅ‚adem jest 
+//zapytanie np.HTTPPost czyli podczas wykonywania dla tego danego requesta obiekt jest taki sam, a podczas nastÄ™pnego nowego requessta np. httpost obiekt bÄ™dzie juÅ¼ inny
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddScoped<RequestTimeMiddleware>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserDtoValidator>(); //Równie¿ trzeba pamiêtaæ aby dodaæ 'AddFluentValidation()' przy impletementowaniu controllerow wiersz 21
+builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserDtoValidator>(); //RÃ³wnieÅ¼ trzeba pamiÄ™taÄ‡ aby dodaÄ‡ 'AddFluentValidation()' przy impletementowaniu controllerow wiersz 21
 builder.Services.AddSwaggerGen();
 
 
@@ -74,8 +78,13 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Groomer API");
 });
 
-app.UseAuthorization();
+app.UseRouting();
+app.UseAuthorization();// ta autozyzacja musi byc pomiÃªdzy UseRouting a UseEndpoitns
 
-app.MapControllers();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
 
 app.Run();

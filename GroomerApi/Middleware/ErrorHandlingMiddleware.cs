@@ -15,7 +15,16 @@ namespace GroomerApi.Middleware
             {
                 await next.Invoke(context); //Czyli podczas uzywania programu jeśli wyskkoczy błąd który sami dodaliśmy np. NotFaoundException to wpadnie w Catch NotFoundException, reszta błędów'Exception' wpadnie do catch nr 2.
             }
-            catch(NotFoundException notfoundExceptiond)
+            catch(ForbidException forbidException)
+            {
+                context.Response.StatusCode = 403;
+            }
+            catch (BadRequestException badRequestEcepion)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync(badRequestEcepion.Message);
+            }
+            catch (NotFoundException notfoundExceptiond)
             {
                 context.Response.StatusCode = 404;
                 await context.Response.WriteAsync(notfoundExceptiond.Message);
@@ -26,6 +35,7 @@ namespace GroomerApi.Middleware
                 context.Response.StatusCode = 500;
                 await context.Response.WriteAsync("Something went wrong");
             }
+
         }
     }
 }

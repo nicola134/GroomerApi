@@ -1,9 +1,15 @@
 ﻿using AutoMapper;
+using GroomerApi.Authorization;
 using GroomerApi.Entities;
 using GroomerApi.Exceptions;
 using GroomerApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace GroomerApi.Services
 {
@@ -13,13 +19,17 @@ namespace GroomerApi.Services
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly AuthenticationSettings _authenticationSettings;
+        private readonly IAuthorizationService _authorizationService;
 
-        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger, IPasswordHasher<User> passwordHasher)
+        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger, IPasswordHasher<User> passwordHasher, AuthenticationSettings authenticationSettings, IAuthorizationService authorizationService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
             _passwordHasher = passwordHasher;
+            _authenticationSettings = authenticationSettings;
+            _authorizationService = authorizationService;
         }
         public UserDto GetById(int id)
         {
@@ -61,7 +71,7 @@ namespace GroomerApi.Services
             return user.Id;
         }
 
-        public void Delete(int id)
+        public void Delete(int id, ClaimsPrincipal claimsPrincipal)
         {
             _logger.LogError($"User with id: {id} DELETE action invoked");
 
@@ -74,12 +84,19 @@ namespace GroomerApi.Services
                 throw new NotFoundException("User not found");
             }
 
+            var authorizationResult = _authorizationService.AuthorizeAsync(claimsPrincipal, user, new ResourceOperationRequirement(ResourceOperation.Delete)).Result;
+
+            if (!authorizationResult.Succeeded)
+            {
+                throw new ForbidException();
+            }
+
             _dbContext.Users.Remove(user);
             _dbContext.SaveChanges();
 
         }
 
-        public void Update(UpdateUserDto dto, int id)
+        public void Update(UpdateUserDto dto, int id, ClaimsPrincipal claimsPrincipal)
         {
             var user = _dbContext
                 .Users
@@ -90,6 +107,13 @@ namespace GroomerApi.Services
                 throw new NotFoundException("User not found");
             }
 
+            var authorizationResult = _authorizationService.AuthorizeAsync(claimsPrincipal, user, new ResourceOperationRequirement(ResourceOperation.Update)).Result;
+
+            if (!authorizationResult.Succeeded)
+            {
+                throw new ForbidException();
+            }
+
             user.FirstName = dto.FirstName;
             user.LastName = dto.LastName;
             user.Email = dto.Email;
@@ -97,6 +121,43 @@ namespace GroomerApi.Services
 
             _dbContext.SaveChanges();
 
+        }
+        public string GenerateJwt(LoginDto dto)
+        {
+            var user = _dbContext.Users
+                .Include(r => r.Role)
+                .FirstOrDefault(u => u.Email == dto.Email);
+            if (user is null)
+            {
+                throw new BadHttpRequestException("Invalid username or password");
+            }
+
+            var result =_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            if(result == PasswordVerificationResult.Failed)
+            {
+                throw new BadRequestException("Invalid username or password");
+            }
+
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+                new Claim(ClaimTypes.Role, $"{user.Role.Name}"),
+
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.JwtKey));
+            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddDays(_authenticationSettings.JwtExpireDays);
+
+            var token = new JwtSecurityToken(_authenticationSettings.JwtIssuer,
+                _authenticationSettings.JwtIssuer,
+                claims,
+                expires: expires,
+                signingCredentials: cred);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            return tokenHandler.WriteToken(token);
         }
     }
 }

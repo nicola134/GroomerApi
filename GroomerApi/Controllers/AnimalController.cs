@@ -1,5 +1,6 @@
 ﻿using GroomerApi.Models;
 using GroomerApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GroomerApi.Controllers
