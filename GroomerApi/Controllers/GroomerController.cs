@@ -20,15 +20,16 @@ namespace GroomerApi.Controllers
             _userService = userService;
         }
         [HttpGet]
-        [Authorize(Roles = "Admin")]// czyli tylko admini mogą użyć tego requsetsta
-        public ActionResult<IEnumerable<UserDto>> GetAll()
+        [AllowAnonymous] //wyłącza authorize
+        public ActionResult<IEnumerable<UserDto>> GetAll([FromQuery]string? searchPhrase)
         {
-            var usersDto = _userService.GetAll();
+            var usersDto = _userService.GetAll(searchPhrase);
 
             return Ok(usersDto);
         }
         [HttpGet("{id}")]
-        [AllowAnonymous] //wyłącza authorize
+
+        [Authorize(Roles = "User")]// czyli tylko admini mogą użyć tego requsetsta
         public ActionResult<UserDto> Get([FromRoute] int id)
         {
             var userDto = _userService.GetById(id);
@@ -51,7 +52,7 @@ namespace GroomerApi.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteUser([FromRoute] int id)
         {
-            _userService.Delete(id, User);
+            _userService.Delete(id);
 
             return NoContent();
         }
@@ -62,7 +63,7 @@ namespace GroomerApi.Controllers
             //{
             //    return BadRequest(ModelState);
             //}
-            _userService.Update(dto, id, User);
+            _userService.Update(dto, id);
 
             return Ok();
         }

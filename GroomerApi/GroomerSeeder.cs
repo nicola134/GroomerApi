@@ -1,20 +1,26 @@
 ﻿using GroomerApi.Entities;
+using GroomerApi.Exceptions;
+using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace GroomerApi
 {
     public class GroomerSeeder
     {
         private readonly GroomerDbContext _dbContext;
-        public GroomerSeeder(GroomerDbContext dbContext)
+        private readonly IPasswordHasher<User> _passwordHasher;
+
+        public GroomerSeeder(GroomerDbContext dbContext, IPasswordHasher<User> passwordHasher)
         {
             _dbContext = dbContext;
+            _passwordHasher = passwordHasher;
         }
         public void Seed()
         {
             if (_dbContext.Database.CanConnect())
             {
-                if(!_dbContext.Roles.Any())
+                if (!_dbContext.Roles.Any())
                 {
                     var roles = GetRoles();
                     _dbContext.Roles.AddRange(roles);
@@ -27,6 +33,15 @@ namespace GroomerApi
                     _dbContext.Users.AddRange(users);
                     _dbContext.SaveChanges();
                 }
+                var admin = _dbContext
+                    .Users
+                    .FirstOrDefault(r => r.RoleId == 2);
+
+                if (admin == null)
+                {
+                    AddAdmin();
+                }
+
             }
         }
         private IEnumerable<Role> GetRoles()
@@ -44,6 +59,32 @@ namespace GroomerApi
             };
             return roles;
         }
+        private void AddAdmin()
+        {
+            User admin = new User()
+            {
+                FirstName = "admin",
+                LastName = "admin",
+                Email = "admin@gmail.com",
+                PhoneNumber = "123-123-345",
+                RoleId = 2,
+                Address = new Address()
+                {
+                    City = "Warszasa",
+                    Street = "test",
+                    PostalCode = "test",
+                },
+            };
+
+            var hashePassword = _passwordHasher.HashPassword(admin, "admin");
+            admin.PasswordHash = hashePassword;
+
+            _dbContext.Users.Add(admin);
+            _dbContext.SaveChanges();
+
+        }
+
+
         private IEnumerable<User> GetUsers()
         {
             List<User> users = new List<User>()
@@ -77,7 +118,7 @@ namespace GroomerApi
                         PostalCode = "test",
                     },
                     RoleId = 1
-                    
+
                 },
                 new User()
                 {
@@ -113,6 +154,6 @@ namespace GroomerApi
             return users;
         }
     }
-    
+
 }
 

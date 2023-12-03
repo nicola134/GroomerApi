@@ -21,8 +21,10 @@ namespace GroomerApi.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly AuthenticationSettings _authenticationSettings;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IUserContextService _userContextService;
 
-        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger, IPasswordHasher<User> passwordHasher, AuthenticationSettings authenticationSettings, IAuthorizationService authorizationService)
+        public UserService(GroomerDbContext dbContext, IMapper mapper, ILogger<UserService> logger, IPasswordHasher<User> passwordHasher, AuthenticationSettings authenticationSettings, IAuthorizationService authorizationService
+            , IUserContextService userContextService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
@@ -30,6 +32,7 @@ namespace GroomerApi.Services
             _passwordHasher = passwordHasher;
             _authenticationSettings = authenticationSettings;
             _authorizationService = authorizationService;
+            _userContextService = userContextService;
         }
         public UserDto GetById(int id)
         {
@@ -46,12 +49,13 @@ namespace GroomerApi.Services
             var result = _mapper.Map<UserDto>(user);
             return result;
         }
-        public IEnumerable<UserDto> GetAll() 
+        public IEnumerable<UserDto> GetAll(string searchPhrase)
         {
             var users = _dbContext
-                .Users 
+                .Users
                 .Include(r => r.Address)
                 .Include(r => r.Animals)
+                .Where(r => searchPhrase == null ||  (r.FirstName.ToLower().Contains(searchPhrase.ToLower()) || r.LastName.ToLower().Contains(searchPhrase.ToLower())))
                 .ToList();
 
             var usersDto = _mapper.Map<List<UserDto>>(users);
@@ -71,7 +75,7 @@ namespace GroomerApi.Services
             return user.Id;
         }
 
-        public void Delete(int id, ClaimsPrincipal claimsPrincipal)
+        public void Delete(int id)
         {
             _logger.LogError($"User with id: {id} DELETE action invoked");
 
@@ -84,7 +88,7 @@ namespace GroomerApi.Services
                 throw new NotFoundException("User not found");
             }
 
-            var authorizationResult = _authorizationService.AuthorizeAsync(claimsPrincipal, user, new ResourceOperationRequirement(ResourceOperation.Delete)).Result;
+            var authorizationResult = _authorizationService.AuthorizeAsync(_userContextService.User, user, new ResourceOperationRequirement(ResourceOperation.Delete)).Result;
 
             if (!authorizationResult.Succeeded)
             {
@@ -96,7 +100,7 @@ namespace GroomerApi.Services
 
         }
 
-        public void Update(UpdateUserDto dto, int id, ClaimsPrincipal claimsPrincipal)
+        public void Update(UpdateUserDto dto, int id)
         {
             var user = _dbContext
                 .Users
@@ -107,7 +111,7 @@ namespace GroomerApi.Services
                 throw new NotFoundException("User not found");
             }
 
-            var authorizationResult = _authorizationService.AuthorizeAsync(claimsPrincipal, user, new ResourceOperationRequirement(ResourceOperation.Update)).Result;
+            var authorizationResult = _authorizationService.AuthorizeAsync(_userContextService.User, user, new ResourceOperationRequirement(ResourceOperation.Update)).Result;
 
             if (!authorizationResult.Succeeded)
             {
@@ -129,7 +133,7 @@ namespace GroomerApi.Services
                 .FirstOrDefault(u => u.Email == dto.Email);
             if (user is null)
             {
-                throw new BadHttpRequestException("Invalid username or password");
+                throw new BadRequestException("Invalid username or password");
             }
 
             var result =_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
