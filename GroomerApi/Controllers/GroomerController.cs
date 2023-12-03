@@ -21,9 +21,9 @@ namespace GroomerApi.Controllers
         }
         [HttpGet]
         [AllowAnonymous] //wyłącza authorize
-        public ActionResult<IEnumerable<UserDto>> GetAll([FromQuery]string? searchPhrase)
+        public ActionResult<IEnumerable<UserDto>> GetAll([FromQuery]UserQuery query )
         {
-            var usersDto = _userService.GetAll(searchPhrase);
+            var usersDto = _userService.GetAll(query);
 
             return Ok(usersDto);
         }

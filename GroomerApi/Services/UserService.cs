@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text;
 
@@ -49,17 +50,41 @@ namespace GroomerApi.Services
             var result = _mapper.Map<UserDto>(user);
             return result;
         }
-        public IEnumerable<UserDto> GetAll(string searchPhrase)
+        public PagedResult<UserDto> GetAll(UserQuery query)
         {
-            var users = _dbContext
+            var baseQuery = _dbContext
                 .Users
                 .Include(r => r.Address)
                 .Include(r => r.Animals)
-                .Where(r => searchPhrase == null ||  (r.FirstName.ToLower().Contains(searchPhrase.ToLower()) || r.LastName.ToLower().Contains(searchPhrase.ToLower())))
+                .Where(r => query.SearchPhrase == null || (r.FirstName.ToLower().Contains(query.SearchPhrase.ToLower()) || r.LastName.ToLower().Contains(query.SearchPhrase.ToLower())));
+
+            if (!string.IsNullOrEmpty(query.SortBy))
+            {
+                var columnsSelectors = new Dictionary<string, Expression<Func<User, object>>>
+                {
+                    {nameof(User.FirstName), r => r.FirstName },
+                    {nameof(User.LastName), r => r.LastName },
+                    {nameof(User.Email), r => r.Email },
+                };
+
+                var selectedColumn = columnsSelectors[query.SortBy];
+
+                baseQuery = query.SortDirection == SortDirection.ASC ?
+                    baseQuery.OrderBy(selectedColumn) 
+                    : baseQuery.OrderByDescending(selectedColumn);
+            }
+
+            var users = baseQuery
+                .Skip(query.PageSize * (query.PageNumber - 1))
+                .Take(query.PageSize)
                 .ToList();
 
+            var totalItemsCount = baseQuery.Count();
+
             var usersDto = _mapper.Map<List<UserDto>>(users);
-            return usersDto;
+
+            var result = new PagedResult<UserDto>(usersDto, totalItemsCount, query.PageSize, query.PageNumber);
+            return result;
         }
 
         public int Create(CreateUserDto dto)
@@ -121,7 +146,7 @@ namespace GroomerApi.Services
             user.FirstName = dto.FirstName;
             user.LastName = dto.LastName;
             user.Email = dto.Email;
-            user.PhoneNumber= dto.PhoneNumber;
+            user.PhoneNumber = dto.PhoneNumber;
 
             _dbContext.SaveChanges();
 
@@ -136,8 +161,8 @@ namespace GroomerApi.Services
                 throw new BadRequestException("Invalid username or password");
             }
 
-            var result =_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
-            if(result == PasswordVerificationResult.Failed)
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            if (result == PasswordVerificationResult.Failed)
             {
                 throw new BadRequestException("Invalid username or password");
             }

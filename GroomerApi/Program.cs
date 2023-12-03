@@ -55,6 +55,7 @@ builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddScoped<RequestTimeMiddleware>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, CreateUserDtoValidator>(); //Również trzeba pamiętać aby dodać 'AddFluentValidation()' przy impletementowaniu controllerow wiersz 21
+builder.Services.AddScoped<IValidator<UserQuery>,UserQueryValidator>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSwaggerGen();

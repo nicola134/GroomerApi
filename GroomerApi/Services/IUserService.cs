@@ -7,7 +7,7 @@ namespace GroomerApi.Services
 {
     public interface IUserService
     {
-        IEnumerable<UserDto> GetAll(string searchPhrase);
+        PagedResult<UserDto> GetAll(UserQuery query);
         UserDto GetById(int id);
         int Create(CreateUserDto dto);
         void Delete(int id);
