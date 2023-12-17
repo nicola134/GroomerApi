@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DevExpress.Utils.Serializing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace GroomerApi.Entities
 {
     public class GroomerDbContext : DbContext
     {
+        public GroomerDbContext(DbContextOptions<GroomerDbContext> options)
+            : base(options)
+        { }
         private string _connectionString = "Server=(localdb)\\mssqllocaldb;Database=GroomerDb;Trusted_Connection=True;";
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }

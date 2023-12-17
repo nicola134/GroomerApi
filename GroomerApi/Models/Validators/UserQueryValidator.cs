@@ -17,9 +17,9 @@ namespace GroomerApi.Models.Validators
                     context.AddFailure("PageSize", $"PageSize must in [{string.Join(",", allowedPageSizes)}]");
                 }
             });
-            RuleFor(r => r.SortBy).Must(value =>  allowedSortByColumnNames.Contains(value))
-                .WithMessage($"Sort by is optional, or must be in [{string.Join(",", allowedSortByColumnNames)}]")
-                .NotNull();
+            RuleFor(r => r.SortBy).Must(value => allowedSortByColumnNames.Contains(value))
+                .WithMessage($"Sort by is optional, or must be in [{string.Join(",", allowedSortByColumnNames)}]");
+
             
 
         }

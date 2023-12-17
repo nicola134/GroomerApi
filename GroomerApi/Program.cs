@@ -14,6 +14,8 @@ using NLog.Web;
 using System.Reflection;
 using System.Text;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
@@ -59,7 +61,15 @@ builder.Services.AddScoped<IValidator<UserQuery>,UserQueryValidator>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontEndClient", builder =>
 
+        builder.AllowAnyMethod()
+        .AllowAnyHeader()
+        .WithOrigins("http://localhost:5139")
+        );
+});
 
 
 
@@ -68,7 +78,7 @@ var app = builder.Build();
 var scope = app.Services.CreateScope();
 var seeder = scope.ServiceProvider.GetRequiredService<GroomerSeeder>();
 // Configure the HTTP request pipeline.
-
+app.UseCors("FrontEndClient");
 seeder.Seed();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RequestTimeMiddleware>();
@@ -91,3 +101,4 @@ app.UseEndpoints(endpoints =>
 });
 
 app.Run();
+public partial class Program { }
