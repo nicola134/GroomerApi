@@ -61,6 +61,7 @@ namespace GroomerApi.Entities
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(_connectionString);
+            // trzeba zainstalować paczki Entity Framweork Core oraz SQLServer i Tools
             //'add-migration Init' - dodaje pliki migracyjne 
             //'update-database' - aktualizuje bazę danych o ostatni plik migracyjny
         }
